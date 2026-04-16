@@ -95,22 +95,22 @@ A representative subset of test cases is shown in Table~\ref{tab:test_cases}, wi
 \textbf{Test Name} & \textbf{Input Value} & \textbf{Expected Result} & \textbf{Actual Result} & \textbf{Passed?} \\
 \hline
 
-Forward Only & [0.9f, 0.0f, 1] & Car drives straight forward, 75\% speed & Car drives straight forward, 75\% speed & \\
+Forward Only & [0.9f, 0.0f, 1] & Car drives straight forward, 75\% speed & Car drives straight forward, 75\% speed & Yes \\
 \hline
 
-Left Only & [0.0f, -0.9f, 1] & Front wheels turn left at a medium rate & Front wheels turn left at a medium rate & \\
+Left Only & [0.0f, -0.9f, 1] & Front wheels turn left at a medium rate & Front wheels turn left at a medium rate & Yes \\
 \hline
 
-Reverse Left & [0.0f, 0.9f, -1] & Car reverses and turns left at medium rate & Car reverses and turns left at medium rate & \\
+Reverse Left & [0.0f, 0.9f, -1] & Car reverses and turns left at medium rate & Car reverses and turns left at medium rate & Yes \\
 \hline
 
-Forward Speed Edge Over & [1.01f, 0.0f, 1] & Car drives straight forward, full speed & Car drives straight forward, full speed & \\
+Forward Speed Edge Over & [1.01f, 0.0f, 1] & Car drives straight forward, full speed & Car drives straight forward, full speed & Yes \\
 \hline
 
-Forward \& Left Under & [0.99f, -0.99f, 1] & Car drives forward, turning left, almost full speed & Car drives forward, turning left, almost full speed & \\
+Forward \& Left Under & [0.99f, -0.99f, 1] & Car drives forward, turning left, almost full speed & Car drives forward, turning left, almost full speed & Yes \\
 \hline
 
-Extreme Back \& Right & [20.0f, -20.0f, -1] & Car reverses right at full speed & Car reverses right at full speed & \\
+Extreme Back \& Right & [20.0f, -20.0f, -1] & Car reverses right at full speed & Car reverses right at full speed & Yes \\
 \hline
 
 \end{tabular}
