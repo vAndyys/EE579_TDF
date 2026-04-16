@@ -1,6 +1,7 @@
 \documentclass[a4paper,11pt]{report}
 \usepackage[utf8]{inputenc}
 \usepackage{strathtitle}
+\usepackage{graphicx}
 
 \project{Technical Documentation File}
 \author{Andrew Smith \\ Lewis Alexander \\ Preben Rasamanickam \\ Kyle Hannah}
@@ -29,7 +30,7 @@ The mapping between ESP32 GPIO pins and motor driver inputs is shown in Figure~\
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.7\textwidth]{gpio-mapping}
+  \includegraphics[width=0.7\textwidth]{images/MotorDriverPinsV2.png}
   \caption{Mapping between ESP32 GPIO pins and motor driver inputs}
   \label{fig:gpio_mapping}
 \end{figure}
@@ -46,7 +47,7 @@ When the \texttt{Motors\_Apply()} function is invoked, control inputs from the p
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.7\textwidth]{control-flow}
+  \includegraphics[width=0.7\textwidth]{images/MotorLogic.png}
   \caption{Motor control logic flow}
   \label{fig:control_flow}
 \end{figure}
@@ -88,18 +89,33 @@ The test suite was structured into four categories: normal operation, boundary c
 A representative subset of test cases is shown in Table~\ref{tab:test_cases}, with the full test suite provided in Appendix~A.
 
 \begin{table}[h]
-  \centering
-  \begin{tabular}{|c|c|c|}
-    \hline
-    Speed & Steering & Direction \\
-    \hline
-    1.0 & 0.0 & 1 \\
-    0.5 & -0.5 & 1 \\
-    -1.0 & 0.2 & -1 \\
-    \hline
-  \end{tabular}
-  \caption{Representative motor control test cases}
-  \label{tab:test_cases}
+\centering
+\begin{tabular}{|l|l|p{4cm}|p{4cm}|c|}
+\hline
+\textbf{Test Name} & \textbf{Input Value} & \textbf{Expected Result} & \textbf{Actual Result} & \textbf{Passed?} \\
+\hline
+
+Forward Only & [0.9f, 0.0f, 1] & Car drives straight forward, 75\% speed & Car drives straight forward, 75\% speed & \\
+\hline
+
+Left Only & [0.0f, -0.9f, 1] & Front wheels turn left at a medium rate & Front wheels turn left at a medium rate & \\
+\hline
+
+Reverse Left & [0.0f, 0.9f, -1] & Car reverses and turns left at medium rate & Car reverses and turns left at medium rate & \\
+\hline
+
+Forward Speed Edge Over & [1.01f, 0.0f, 1] & Car drives straight forward, full speed & Car drives straight forward, full speed & \\
+\hline
+
+Forward \& Left Under & [0.99f, -0.99f, 1] & Car drives forward, turning left, almost full speed & Car drives forward, turning left, almost full speed & \\
+\hline
+
+Extreme Back \& Right & [20.0f, -20.0f, -1] & Car reverses right at full speed & Car reverses right at full speed & \\
+\hline
+
+\end{tabular}
+\caption{Motor control test results}
+\label{tab:motor_tests}
 \end{table}
 
 \end{document}
