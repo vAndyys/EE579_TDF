@@ -126,9 +126,9 @@ A measured wall heading is computed using the relationship:
 
 where $L$ and $R$ represent the combined left and right sensor loads, and $F$ and $B$ represent the combined front and rear loads. This heading is wrapped to the range of $[-180^\circ, 180^\circ]$ to ensure the path planning outputs are possible for the vehicle to achieve.
 
-\todo[inline, color=red!40]{This section should be updated after IMU integration is finalized.}
+The IMU is used to steady the APF output rather than define the navigation field itself. The drift-compensated yaw rate from Chapter~3 is fed into the planner to soften sharp steering changes and reduce the oscillation that can occur when the APF repeatedly rebounds from walls and black tape. When \texttt{imu\_heading\_valid} is set, the IMU heading can also nudge the stored wall reference, but IR and ToF data still provide the main navigation input.
 
-During initialisation, the subsystem stores an \emph{original wall heading}, which acts as a stable reference direction. This reference is first established when the ToF sensor reports a valid distance measurement. Once initialised, the stored heading is updated each cycle using the current IR balance and distance information, allowing the reference direction to adapt gradually, allowing the system to adapt to changing conditions.
+During initialisation, the subsystem stores an \emph{original wall heading} as a stable reference direction. Once the ToF sensor reports a valid distance measurement, that heading is updated each cycle using the current IR balance and distance reading so the reference can adapt gradually to the course.
 \subsection{Control Logic}
 
 The navigation decision is based on the combination of attractive and repulsive fields. The attractive component encourages the vehicle to move in the direction of the stored wall heading, which acts as the intended course direction. Its magnitude is scaled according to the measured front distance, meaning that the vehicle is encouraged to move more strongly when there is sufficient space ahead.
