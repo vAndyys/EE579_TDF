@@ -1,4 +1,4 @@
-\chapter{Navigation & Actuation Subsystems}
+\chapter{Navigation \& Motor Control}
 
 \section{Motor Controls}
 
@@ -10,7 +10,7 @@ The motor control subsystem governs the movement of the vehicle and is implement
 
 The motor control subsystem consists of two DC motors: a rear-mounted drive motor responsible for propulsion and a front-mounted motor used for steering via wheel pivoting. This configuration is retained from the original chassis design, avoiding physical modifications and ensuring compliance with project requirements on chassis dimensions. Maintaining the existing layout also reduces mechanical complexity and ensures compatibility with the pre-defined mounting structure.
 
-Motor actuation is achieved using an L298N Dual H-Bridge Motor Driver Module, which provides an interface between the ESP32 microcontroller and the motors. The driver enables bidirectional control of each motor using an H-bridge configuration, allowing both forward and reverse operation.
+Motor control is achieved using an L298N Dual H-Bridge Motor Driver Module, which provides an interface between the ESP32 microcontroller and the motors. The driver enables bidirectional control of each motor using an H-bridge configuration, allowing both forward and reverse operation.
 
 The ESP32 supplies control signals to the driver through four digital input pins, which determine the direction of rotation for each motor. These input pins are arranged in pairs, with IN1 and IN2 controlling the steering motor, and IN3 and IN4 controlling the drive motor. By setting one pin in each pair high while the other is low, the polarity of the voltage applied to each motor is controlled.
 
@@ -56,9 +56,9 @@ The motor control subsystem is structured as a modular interface consisting of t
 
 The \texttt{Motors\_Init()} function is responsible for configuring the PWM channels used to drive the motor driver inputs. PWM generation and duty cycle control are implemented using the ESP32 LEDC library. All PWM channels are initialised with a duty cycle of 0\%, ensuring that the motors remain inactive on system startup.
 
-The \texttt{Motors\_Apply()} function implements the control logic described in the previous section and serves as the main interface for motor actuation. It receives speed, steering, and direction inputs from the pathfinding module and translates these into PWM duty cycles applied to the motor driver inputs.
+The \texttt{Motors\_Apply()} function implements the control logic described in the previous section and serves as the main interface for motor control. It receives speed, steering, and direction inputs from the pathfinding module and translates these into PWM duty cycles applied to the motor driver inputs.
 
-Input validation is performed within this function to ensure robust operation. Speed and steering values are constrained to the range [-1, 1], with out-of-range inputs clamped while preserving their original sign. The direction input is expected to be either -1 or 1; invalid values default to forward motion. This behaviour is intentionally chosen to prioritise forward displacement in the event of unexpected pathfinding outputs, maximising progress through the course while minimising reverse motion that does not contribute to overall advancement.
+Input validation is performed within this function to ensure robust operation. Speed is constrained to [0, 1], steering is constrained to [-1, 1], and out-of-range values are clamped before applying PWM. The direction input is expected to be either -1 or 1; invalid values default to forward motion. This behaviour is intentionally chosen to prioritise forward displacement in the event of unexpected pathfinding outputs, maximising progress through the course while minimising reverse motion that does not contribute to overall advancement.
 
 The function updates the PWM outputs by mapping validated input values directly to duty cycles, ensuring that only the channel corresponding to the intended direction of motion is active at any given time. This maintains consistency with the control scheme described previously and prevents conflicting motor commands.
 
@@ -143,7 +143,7 @@ where $F_x$ and $F_y$ are the horizontal and vertical components of the combined
 
 Speed is estimated from the magnitude of the resultant field and then adjusted according to environmental risk. Motion is reduced when the vehicle is close to a wall or obstacle, it is also reduced when the IR sensors indicate a strong tape danger signal. In addition, if the repulsive component becomes large, the maximum speed is capped to reduce oscillation and improve stability. This produces smoother behaviour in confined or ambiguous sections of the course.
 
-To prevent abrupt changes in motion, both heading and speed are filtered using simple temporal smoothing by interpolating the new output with the previous. The new command is interpolated with the previous output, which reduces jitter and helps the vehicle maintain stable motion across successive control cycles.
+To prevent abrupt changes in motion, the heading command is filtered using temporal smoothing by interpolating the new output with the previous heading. This reduces jitter and helps the vehicle maintain stable motion across successive control cycles.
 
 \subsection{Software Implementation}
 
@@ -153,9 +153,9 @@ The \texttt{apf\_navigation\_init()} function resets the internal state variable
 
 The \texttt{apf\_navigation\_compute()} function contains the main APF logic. It receives sensor data, validates and clamps the inputs, computes the attractive and repulsive components, and produces a desired heading and speed. Internal memory is updated at the end of each call so that the next iteration can make use of the previous output. This stateful design is important because it provides continuity between control cycles and improves navigation stability.
 
-The \texttt{apf\_navigation\_to\_control()} function maps the APF output into low-level drive commands. The heading is normalised to a steering range by dividing it by $45^\circ$ and clamping the result to $[-1,1]$. The speed value is also constrained to $[0,1]$. The direction output is fixed to forward motion, meaning that the planner is designed primarily for continuous forward navigation rather than reversing manoeuvres.
+The \texttt{apf\_navigation\_to\_control()} function maps the APF output into low-level drive commands. The heading is normalised to a steering range by dividing it by $40^\circ$ and clamping the result to $[-1,1]$. The speed value is also constrained to $[0,1]$. The direction output is fixed to forward motion, meaning that the planner is designed primarily for continuous forward navigation rather than reversing manoeuvres.
 
-This separation between navigation and actuation provides a clear abstraction layer. The path planner determines \emph{where} the vehicle should move, while the motor control subsystem determines \emph{how} that motion is physically applied to the motors.
+This separation between navigation and motor control provides a clear abstraction layer. The path planner determines \emph{where} the vehicle should move, while the motor control subsystem determines \emph{how} that motion is physically applied to the motors.
 
 \subsection{Behavioural Characteristics}
 

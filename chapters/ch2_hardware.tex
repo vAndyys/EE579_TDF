@@ -1,7 +1,7 @@
 \chapter{Hardware Architecture}
 
 \section{System Overview}
-The hardware architecture is centred around an ESP32-S3 microcontroller, chosen for its dual-core processing capabilities, allowing task parallelisation between sensor polling and the main control loop. The sensor suite consists of four infrared (IR) sensors, a Time-of-Flight (ToF) distance sensor, and an MPU-6050 Inertial Measurement Unit (IMU). A dual H-bridge motor driver translates the control signals into physical movement.
+The hardware architecture is centred around an ESP32-S3 microcontroller, chosen for its dual-core processing capabilities, allowing task parallelisation between sensor polling and the main control loop. The sensor suite consists of four infrared (IR) sensors, a Time-of-Flight (ToF) distance sensor, and an MPU-6050 Inertial Measurement Unit (IMU). The MPU-6050 was selected due to its low cost, wide availability, and its inclusion of a 3-axis gyroscope, which helps with reducing APF-induced "ping-pong" oscillations using yaw damping. A dual H-bridge motor driver translates the control signals into physical movement.
 
 \begin{figure}[h]
     \centering
@@ -11,9 +11,9 @@ The hardware architecture is centred around an ESP32-S3 microcontroller, chosen 
 \end{figure}
 
 \section{Component Mounting \& Integration}
-Custom 3D-printed mounts were designed to secure the electronics and sensor suite to the chassis robustly. The ESP32-S3 microcontroller and the 9V power supply battery are housed in dedicated mounts positioned near the rear of the vehicle. 
+Custom 3D-printed mounts were designed to secure the electronics and sensor suite to the chassis. The ESP32-S3 microcontroller and the 9V power supply battery are housed in dedicated mounts positioned near the rear of the vehicle. 
 
-The ToF sensor is mounted securely at the front of the vehicle to detect forward obstacles. The four IR sensors are positioned at each corner (front-left, front-right, rear-left, and rear-right) using custom 3D-printed mounts attached to the tire rims, ensuring consistent distance from the floor to detect tape boundaries accurately. Finally, the IMU is mounted underneath the motor driver, near the vehicle's centre of gravity (CoG), to provide reliable yaw feedback.
+The ToF sensor is mounted securely at the front of the vehicle to detect forward obstacles. The four IR sensors are positioned at each corner (front-left, front-right, rear-left, and rear-right) using custom 3D-printed mounts attached to the tire rims. Because the vehicle's rear rims sit higher than the front ones, there is a height disparity between the front and rear sensors. This physical difference is compensated for by independently tuning the analogue thresholds for each sensor in the software. The IMU is mounted underneath the motor driver, near the vehicle's centre of gravity (CoG), to provide more accurate yaw rate feedback.
 
 \todo[inline, color=blue!20]{Insert 3D CAD models and physical placement diagrams of the ESP, battery, ToF, and IR mounts here}
 
@@ -47,7 +47,7 @@ To conserve GPIO pins, the ToF sensor (address \texttt{0x29}) and the MPU-6050 I
 \end{itemize}
 
 \section{Power Distribution and Custom Vero Board}
-A custom Vero board serves as a central power and communications distribution hub for the vehicle, ensuring robust and reliable electrical connections across all subsystems.
+A Vero board was utilised to manage power, ground, and the required I2C pull-ups. This approach provided the physical reliability needed for a moving chassis without the long lead times of a custom PCB.
 
 \begin{itemize}
     \item \textbf{Grounding:} The four IR sensors, ESP32, ToF, and IMU share a common ground. These are routed to the Vero board and tied to the motor driver ground to establish a consistent reference voltage across the entire system.
