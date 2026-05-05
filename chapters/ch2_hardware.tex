@@ -19,7 +19,7 @@ The ToF sensor is mounted securely at the front of the vehicle to detect forward
     \centering
     \begin{minipage}{0.6\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/esp holder.png}
+        \includegraphics[width=\textwidth]{images/esp and battery holder.png}
         \caption{ESP32-S3 Holder}
     \end{minipage}
     \hfill
@@ -65,7 +65,7 @@ To conserve GPIO pins, the ToF sensor (address \texttt{0x29}) and the MPU-6050 I
     \item ToF XSHUT: \texttt{GPIO9}
 \end{itemize}
 
-\section{Power Distribution and Custom Vero Board}
+\section{Power Distribution and Vero Board}
 A Vero board was utilised to manage power, ground, and the required I2C pull-ups. This approach provided the physical reliability needed for a moving chassis without the long lead times of a custom PCB.
 
 \begin{itemize}
