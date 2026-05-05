@@ -1,3 +1,8 @@
 \chapter{Introduction}
 
 
+This document presents the technical design and implementation of an autonomous vehicle system developed using an ESP32-S3 microcontroller. The project integrates hardware and software components to achieve reliable navigation within a constrained environment using onboard sensing and real-time control.
+
+The system combines four infrared (IR) sensors and a Time-of-Flight (ToF) distance sensor to perceive its surroundings along with an inertial measurement unit (IMU). These inputs are processed through a structured software architecture built on FreeRTOS, enabling concurrent task execution and maintaining a consistent control loop. A finite state machine (FSM) governs the system behaviour, managing transitions between operational states such as navigation, recovery, and completion.
+
+Navigation is achieved using an Artificial Potential Field (APF) approach, which allows the vehicle to dynamically respond to obstacles and boundaries without requiring a predefined map. This is then passed into a motor control subsystem that translates high-level motion commands into physical actuation through a dual H-bridge driver.
