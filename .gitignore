@@ -16,3 +16,4 @@
 *.dvi
 *.bcf
 *.xml
+.vscode*
