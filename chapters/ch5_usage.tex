@@ -1,2 +1,43 @@
 \chapter{Usage Instructions \& Modifiability}
 
+\subsection{Powering the System}
+
+A 9V battery must be installed to power the system. The battery should be placed in the designated compartment located beneath the ESP32-S3 mount. Then connect the battery to the power connector. Upon connection, the system will power on and all onboard LEDs should illuminate, indicating that the electronics are receiving power and no wires have disconnected.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/battery place.png}
+    \caption{Image with captions showing the battery placement and 5V connection to the ESP32-S3}
+    \label{fig:Diagram of battery placement and 5V connection}
+\end{figure}
+
+\subsection{System Start Procedure}
+
+After powering the system:
+\begin{itemize}
+    \item Place the vehicle at the designated starting line.
+    \item Press and hold the ESP32-S3 BOOT button to initiate the program.
+\end{itemize}
+
+The system will then transition from its waiting state into active operation.
+
+\subsection{Flashing and Safety Precautions}
+
+When flashing new code to the ESP32-S3:
+\begin{itemize}
+    \item The 5V power line must be disconnected before flashing. Failure to do so may create a risk of short-circuiting the system.
+    \item Before reconnecting the battery, ensure that the 5V line is properly reattached to the ESP32-S3.
+\end{itemize}
+
+Following these precautions helps prevent damage to both the microcontroller and associated components.
+
+\section{System Modifiability and Extension}
+
+The software architecture has been designed with modularity as a core principle, allowing individual subsystems to be developed, tested, and extended independently. Each major component—such as sensor processing, navigation, and motor control—is implemented as a separate module with clearly defined inputs and outputs.
+\newline
+For example, the navigation module produces high-level motion commands (speed, steering, and direction), while the motor control module is responsible solely for translating these commands into PWM signals for the hardware. As a result, all subsystems can treat each other as black boxes: the navigation system does not require knowledge of how motor signals are generated, and the motor control system does not depend on how navigation decisions are made.
+This separation allows development work to be carried out on a single subsystem without affecting others. For example, improvements to the APF algorithm can be made independently of the navigation system.
+\newline
+To extend the system, future work should adhere to the existing interface structures (e.g., SensorData and ControlCommand). Maintaining these interfaces ensures compatibility between modules and preserves the integrity of the overall architecture. Any new functionality should be encapsulated within its respective module and integrated through these predefined data structures.
+\newline
+This modular design not only simplifies debugging and testing but also supports scalability, making it straightforward to introduce additional features or upgrade individual components in future iterations of the project.
