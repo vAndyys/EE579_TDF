@@ -110,8 +110,6 @@ Extreme Back \& Right & [20.0f, -20.0f, -1] & Car reverses right at full speed &
 
 \subsection{Overview}
 
-\todo[inline, color=red!40]{Need to add stuff on when an obstacle is too close it starts reversing when thats implemented.}
-
 The path planning subsystem is responsible for converting sensor data into motion commands for the vehicle. Unlike a map-based planner, this implementation uses an artificial potential field (APF) approach, in which the vehicle is guided by a combination of attractive and repulsive influences derived from the sensors. The resulting heading and speed are then passed into the motor control subsystem.
 
 This method was chosen because it is compact, computationally efficient, and allows for a small non complete map to be used. The path planning logic operates directly on the inputs from the infrared and distance sensors along with the IMU data. By using continuous sensor feedback, the vehicle is able to react dynamically to changes in the environment while maintaining smooth motion.

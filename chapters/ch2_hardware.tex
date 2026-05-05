@@ -15,7 +15,26 @@ Custom 3D-printed mounts were designed to secure the electronics and sensor suit
 
 The ToF sensor is mounted securely at the front of the vehicle to detect forward obstacles. The four IR sensors are positioned at each corner (front-left, front-right, rear-left, and rear-right) using custom 3D-printed mounts attached to the tire rims. Because the vehicle's rear rims sit higher than the front ones, there is a height disparity between the front and rear sensors. This physical difference is compensated for by independently tuning the analogue thresholds for each sensor in the software. The IMU is mounted underneath the motor driver, near the vehicle's centre of gravity (CoG), to provide more accurate yaw rate feedback.
 
-\todo[inline, color=blue!20]{Insert 3D CAD models and physical placement diagrams of the ESP, battery, ToF, and IR mounts here}
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{esp holder.png}
+        \caption{ESP32-S3 Holder}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{TOF holder.png}
+        \caption{ToF Sensor Holder}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ir holder.png}
+        \caption{IR Sensor Holder}
+    \end{minipage}
+\end{figure}
 
 \section{Wiring and Pin Allocation}
 The ESP32-S3 interfaces with the peripherals via ADC channels, I2C, and digital PWM pins. The pin allocation was carefully chosen to avoid conflicts, particularly avoiding the use of strapping pins or ADC channels that are active during boot for the motor PWM logic.
