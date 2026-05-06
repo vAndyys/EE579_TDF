@@ -1,4 +1,5 @@
 \chapter{Hardware Architecture}
+\label{ch:hardware_arch}
 
 \section{System Overview}
 The hardware architecture is centred around an ESP32-S3 microcontroller, chosen for its dual-core processing capabilities, allowing task parallelisation between sensor polling and the main control loop. The sensor suite consists of four infrared (IR) sensors, a Time-of-Flight (ToF) distance sensor, and an MPU-6050 Inertial Measurement Unit (IMU). The MPU-6050 was selected due to its low cost, wide availability, and its inclusion of a 3-axis gyroscope, which helps with reducing APF-induced "ping-pong" oscillations using yaw damping. A dual H-bridge motor driver translates the control signals into physical movement.

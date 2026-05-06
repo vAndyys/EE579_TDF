@@ -1,4 +1,5 @@
 \chapter{Software Architecture \& Finite State Machine}
+\label{ch:software_arch}
 
 \section{System Architecture Overview}
 The software architecture runs on FreeRTOS on the ESP32-S3 and keeps sensor collection, decision-making, and motor control separate. Although the ESP32-S3 has two cores, explicit core pinning was not needed; FreeRTOS SMP is used to spread the sensor tasks across the available cores. This keeps the path-planning code responsive and less affected by polling delays.
@@ -29,11 +30,13 @@ Motor commands are standardised through a \texttt{ControlCommand} structure with
 \end{itemize}
 Keeping navigation separate from raw PWM output makes the APF module independent of the L298N H-bridge, so hardware changes or motor retuning do not affect the algorithm.
 \section{RTOS Task Management \& The 100Hz Control Loop}
+\label{sec:rtos_tasks}
 The ToF, IR, and IMU sensors each run in their own FreeRTOS task. Rather than overwriting global variables, which risks race conditions, each task packages its reading into a \texttt{sensor\_event\_t} packet and sends it to the thread-safe FreeRTOS queue (\texttt{g\_sensor\_queue}).
 
 To stop fast-polling sensors from starving the FSM or tripping the watchdog, the central control task handles at most 16 events per cycle. It then uses \texttt{vTaskDelayUntil()} to maintain a 100Hz, or 10ms, control loop. That steady timing helps with smooth trajectory calculations and accurate IMU integration.
 
 \section{IMU Processing \& Dynamic Bias Calibration}
+\label{sec:imu_bias}
 MEMS gyroscopes such as the MPU-6050 suffer from zero-bias drift and can report non-zero angular velocity even when the vehicle is still. If that error is left uncorrected, heading drift builds up over time.
 
 The system updates the gyroscope bias whenever the vehicle is at rest. It treats the vehicle as stationary when the gyroscope magnitude stays below $12^{\circ}/s$ and the accelerometer reads roughly Earth's gravity ($1g \pm 0.2g$) for at least 0.5 seconds. During these periods, the zero-bias is updated with an Exponential Moving Average (EMA) filter:
