@@ -31,7 +31,7 @@ When flashing new code to the ESP32-S3:
 
 Following these precautions helps prevent damage to both the microcontroller and associated components.
 
-\section{Test Points & Validation}
+\section{Test Points \& Validation}
 
 \subsection{Motor Control Validation}
 The motor subsystem can be validated using the MotorsTesting.c test driver. When this file is integrated into the main application and flashed to the ESP32, the system executes a predefined sequence of motor tests. 
@@ -39,12 +39,12 @@ Testing should be conducted with the vehicle physically restrained to prevent un
 Observed motor behaviour should correspond to the direction reported through the serial interface. If the physical movement does not match the reported command, the wiring between the ESP32 and the motor driver should be verified against the pin mapping shown in the motor control section.
 
 \subsection{IR Sensor Validation}
-The IR sensors include onboard indicator LEDs which provide immediate feedback regarding sensor operation. One LED indicates that the sensor is receiving power, while the second LED changes state when the sensor detects reflected infrared light above the configured threshold.
-Sensor operation can therefore be verified by placing black tape or another reflective surface beneath the sensor and observing the LED response. If the power indicator LED is inactive, the voltage and ground connections on the Veroboard should be inspected for faults.
+The IR sensors provide an analog voltage on their ADC outputs which the firmware reads to determine floor reflectivity; the onboard indicator LEDs are driven by the sensor's digital threshold output and are not used by the software. Therefore, the LED state should not be used as a primary reference for black-tape detection.
+To verify sensor operation, monitor the ADC readings (for example via the serial debug output or an ADC test routine) while placing black tape or another reflective surface beneath the sensor. If the LED power indicator is inactive, inspect the voltage and ground connections on the Veroboard for faults, but rely on the ADC measurements for detection logic.
 
 \subsection{ToF Sensor Validation}
 Under normal operation, the vehicle continues forward movement in the absence of sensor input. The primary condition that causes the vehicle to stop is obstacle detection from the Time-of-Flight (ToF) sensor.
-If the ToF sensor fails to respond, the Veroboard connections should be checked, particularly the pull-up resistor connections used by the communication lines.
+If the ToF sensor fails to respond, check the Veroboard connections, particularly the I2C pull-up resistors and wiring for the communication lines. The IMU (MPU-6050) shares the same I2C bus and should be checked similarly — if the IMU is not responding, inspect the same pull-ups, SDA/SCL wiring, and device power/ground connections.
 
 \subsection{Integrated System Testing}
 The complete system can be validated in a stationary environment by manually presenting black tape beneath the IR sensors to simulate track movement. This allows sensor responses and corresponding motor outputs to be observed without requiring the vehicle to physically traverse a course.
