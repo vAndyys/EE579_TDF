@@ -1,0 +1,20 @@
+\chapter{System Specification}
+
+\section{Constraints}
+The design adheres to the following constraints:
+\begin{itemize}
+    \item The original chassis dimensions are preserved.
+    \item No protrusions extend more than 30~mm beyond the original vehicle outline.
+    \item No directional control is provided after the run has been started.
+    \item The line to be avoided is 38~mm wide and may turn or touch the side walls.
+    \item The finish line is 10~m from the start, with a two-minute run limit.
+\end{itemize}
+
+\section{Functional Requirements}
+The current implementation uses an ESP32-S3, IR sensors, a front ToF sensor, and an IMU within a FreeRTOS control loop. It starts from the BOOT button, reads sensor data, computes motor commands, and stops the motors on timeout or stale sensor data.
+\begin{itemize}
+    \item Start the run from a button press.
+    \item Process sensor inputs for tape, distance, and heading.
+    \item Generate steering and propulsion commands for the motors.
+    \item Enter recovery when the control logic detects a stuck condition.
+\end{itemize}
