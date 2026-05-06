@@ -108,6 +108,176 @@ Extreme Back \& Right & [20.0f, -20.0f, -1] & Car reverses right at full speed &
 \label{tab:motor_tests}
 \end{table}
 
+\section{Sensors and Sensor Management}
+\subsection{Overview}
+
+The sensor subsystem provides the environmental awareness needed by the navigation logic and the finite state machine. Three classes of sensor are used:
+\begin{itemize}
+    \item \textbf{Infrared (IR) reflectance sensors:} Four sensors mounted at each corner distinguish the marble floor from the black boundary tape.
+    \item \textbf{VL53L3CX Time-of-Flight (ToF):} A forward-facing distance sensor measures the range to obstacles directly ahead.
+    \item \textbf{MPU-6050 Inertial Measurement Unit (IMU):} Supplies a drift-compensated yaw rate that the APF planner uses to damp steering oscillations.
+\end{itemize}
+The bias-compensation pipeline that stabilises the gyroscope yaw rate is described in Section~\ref{sec:imu_bias}, and the normalised \texttt{SensorData} contract consumed by navigation is introduced in Chapter~\ref{ch:software_arch}.
+
+Coordination of the three sensor types is handled by the ranging manager (\texttt{ranging\_manager.c}/\texttt{.h}), which encapsulates sensor initialisation, FreeRTOS task lifecycle, cached measurement storage, and per-device health monitoring. The ranging manager provides:
+\begin{itemize}
+    \item \textbf{Queue-based event delivery:} Each sensor task packages its readings into \texttt{sensor\_event\_t} packets and delivers them through the queue described in Section~\ref{sec:rtos_tasks}.
+    \item \textbf{Direct-query interface:} Functions \texttt{ranging\_manager\_get\_latest\_tof()}, \texttt{ranging\_manager\_get\_latest\_ir()}, and \texttt{ranging\_manager\_get\_latest\_imu()} allow synchronous reads of the most recent cached values.
+    \item \textbf{Runtime control:} Functions \texttt{ranging\_manager\_pause()}, \texttt{ranging\_manager\_resume()}, and the \texttt{ranging\_manager\_set\_*\_poll\_rate()} family allow polling to be suspended or retuned without tearing down the underlying tasks.
+    \item \textbf{Centralised configuration:} Define all hardware-facing parameters, including pin assignments, polling intervals, calibration constants, detection thresholds, and per-device enable flags in \texttt{sensor\_config.h}.
+\end{itemize}
+
+\subsection{Hardware}
+\subsubsection{IR sensor}
+\label{sec:ir_hardware}
+
+The IR reflectance sensors are TCRT5000-based DAOKAI modules\footnote{\href{https://www.amazon.co.uk/dp/B0B2PHWQH2}{DAOKAI TCRT5000 IR reflective module four-pack}} (Figure~\ref{fig:ir_breakout}), each pairing a 950~nm emitter with a phototransistor on a small breakout. White surfaces pull the analogue output close to ground, while matte black tape lets it rise towards the supply rail. Only the analogue output (A0) is used; it is wired into the ESP32-S3 ADC channels listed in Chapter~\ref{ch:hardware_arch}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{images/ir_breakout.png}
+\caption{TCRT5000 IR reflectance sensor module}
+\label{fig:ir_breakout}
+\end{figure}
+
+A per-sensor linear mapping converts the calibrated voltage into a normalised tape ratio in the the range $[0.0, 1.0]$:
+\[ r = \frac{V_{mv} - V_{blank}}{V_{tape} - V_{blank}} \]
+where $V_{blank}$ and $V_{tape}$ are per-sensor calibration constants and the result is clamped before being passed to the navigation logic. 
+
+The competition surface is polished marble with matte black boundary tape; both constants vary noticeably between corners due to mounting-height and unit-to-unit differences, so the defaults declared in \texttt{sensor\_config.h} are overridden at runtime with the values reported in the testing subsection.
+
+The TCRT5000 datasheet specifies an effective sensing window of approximately 0.2--15~mm, and the analogue response depends strongly on the sensor-to-floor gap. The main practical limitations are:
+\begin{itemize}
+    \item \textbf{Mounting height:} small changes in the gap between the sensor and the floor cause large changes in the reading, so each sensor is calibrated separately.
+    \item \textbf{Unit-to-unit variation:} the four breakouts do not give identical readings on the same surface, and the per-sensor calibration absorbs the difference.
+    \item \textbf{Ambient light:} stray infrared light from outside can introduce noise and reduce the contrast between floor and tape.
+    \item \textbf{Electrical noise:} the sensor has no on-board filtering, so noise from the motor driver can appear directly on the ADC input.
+\end{itemize}
+In practice, ambient lighting in the competition environment did not produce a measurable shift in the readings; bare-floor and on-tape voltages remained within calibration tolerance across the lighting conditions encountered during testing.
+
+\subsubsection{ToF sensor}
+\label{sec:tof_hardware}
+
+Forward-facing ranging is provided by a Fermion VL53L3CX breakout from DFRobot\footnote{\href{https://thepihut.com/products/fermion-vl53l3cx-tof-distance-ranging-sensor-breakout}{Fermion VL53L3CX ToF distance ranging sensor breakout}} (Figure~\ref{fig:tof_breakout}) carrying the STMicroelectronics VL53L3CX module. The sensor combines a 940~nm Class~1 VCSEL emitter with a SPAD receive array and reports up to four targets per ranging frame, each with a status code indicating measurement validity.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{images/tof_breakout.jpg}
+\caption{Fermion VL53L3CX ToF ranging sensor breakout}
+\label{fig:tof_breakout}
+\end{figure}
+
+The driver configures \texttt{VL53LX\_DISTANCEMODE\_MEDIUM} for improved ambient-light immunity at the cost of upper range. The main ranging loop takes the first valid target and converts it into centimetres before passing it to the navigation logic.
+
+The VL53L3CX datasheet\footnote{\href{https://www.st.com/en/imaging-and-photonics-solutions/vl53l3cx.html}{STMicroelectronics VL53L3CX product page and datasheet}} notes the following limitations relevant to the application:
+\begin{itemize}
+    \item \textbf{Maximum range:} up to 310cm against an 88\% reflectivity target, dropping to 170cm against a 17\% target under low ambient light (i.e. indoors).
+    \item \textbf{Field of view:} a typical $25^\circ$ FoV, sufficient for forward obstacle detection.
+    \item \textbf{Minimum range:} reliable detection begins at approximately 25~mm; closer targets return either minimum detection range or invalid status codes, which the firmware treats as ``no target'' rather than zero distance.
+\end{itemize}
+
+\subsubsection{IMU sensor}
+\label{sec:imu_hardware}
+
+The inertial measurement unit is a DollaTek MPU-6050 breakout\footnote{\href{https://www.amazon.co.uk/dp/B07DJ4KMBF}{DollaTek MPU-6050 6-axis IMU breakout}} (Figure~\ref{fig:imu_breakout}) carrying the InvenSense MPU-6050. The application uses the gyroscope yaw axis for the APF damping term and the accelerometer purely as a stationarity detector for the bias-calibration logic in Section~\ref{sec:imu_bias}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{images/imu_breakout.jpg}
+\caption{MPU-6050 six-axis IMU breakout}
+\label{fig:imu_breakout}
+\end{figure}
+
+The MPU-6050 datasheet notes the following limitations relevant to the application:
+\begin{itemize}
+    \item \textbf{Gyroscope zero-rate drift:} non-zero output varies with temperature and power cycle; compensated by the EMA bias estimator in Section~\ref{sec:imu_bias}.
+    \item \textbf{Vibration sensitivity:} chassis vibration can briefly violate the $1g \pm 0.2g$ stationarity criterion and pause bias updates.
+\end{itemize}
+
+\subsection{Software}
+
+The ranging manager polls each sensor on its own task and caches the most recent sample for synchronous readers.
+
+\subsubsection{Architecture}
+
+The ranging manager spawns one FreeRTOS task per enabled sensor type and uses \texttt{vTaskDelayUntil()} to hold each at its configured cadence (10~ms IR, 20~ms IMU, 30~ms ToF). Each iteration calls the driver, locks the shared mutex, writes the new sample into the cached \texttt{tof\_sample\_t}, \texttt{ir\_sample\_t}, or \texttt{imu\_sample\_t}, releases the mutex, and posts a \texttt{sensor\_event\_t} to the output queue. The cached samples are read by \texttt{ranging\_manager\_get\_latest\_*()}; the queue is drained by the main control loop.
+
+Each task also updates a per-device health flag (\texttt{SENSOR\_STATE\_OK}, \texttt{\_ERROR}, or \texttt{\_OFFLINE}) that callers can read through \texttt{ranging\_manager\_get\_*\_health()}; the IR sensors are tracked per channel so the FSM can ignore one channel while still trusting the other three.
+
+\subsubsection{Queue and Runtime Control}
+
+The output queue is owned by the application and passed into \texttt{ranging\_manager\_start()}, which keeps queue lifetime decoupled from the manager. Producer-side sends are non-blocking: if the queue is full the oldest event is discarded and the new event is sent in its place, so a slow consumer cannot block a polling task and skew the IMU sampling interval. The consumer-side rate limiting that drains this queue is described in Section~\ref{sec:rtos_tasks}.
+
+Runtime control is provided by \texttt{ranging\_manager\_pause()} and \texttt{ranging\_manager\_resume()}, which toggle a flag that each task observes at the top of its loop, and by the \texttt{ranging\_manager\_set\_*\_poll\_rate()} family, which adjusts the cadence taken by \texttt{vTaskDelayUntil()} on the following iteration without restarting the task. For the IR sensors, an additional \texttt{ranging\_manager\_ir\_tune()} hook allows the per-channel calibration constants to be updated at runtime, which was used during calibration to converge on the values reported in Section~\ref{sec:ir_calibration} without recompiling the firmware.
+
+\subsubsection{Firmware}
+
+The IR and ToF sensors each have a dedicated driver under \texttt{components/}; the ranging manager calls these drivers and does not access the hardware directly.
+
+The IR driver (\texttt{components/ir\_driver/ir.c}) was written entirely in-house. It wraps the ESP-IDF \texttt{adc\_oneshot} and \texttt{adc\_cali} APIs behind a small per-sensor interface (\texttt{ir\_sensor\_init()}, \texttt{ir\_sensor\_read\_raw()}, \texttt{ir\_sensor\_read\_voltage()}, \texttt{ir\_sensor\_tape\_detected()}, \texttt{ir\_sensor\_deinit()}, and \texttt{ir\_tape\_ratio()}). Two aspects of the driver are worth noting:
+\begin{itemize}
+    \item \textbf{Reference-counted ADC unit handles:} static \texttt{adc\_oneshot\_unit\_handle\_t} instances for ADC1 and ADC2 are shared between channels and only torn down when the last sensor releases them, avoiding redundant re-initialisation as the four IR sensors are brought up sequentially.
+    \item \textbf{Calibration with graceful fallback:} curve-fitting calibration via \texttt{adc\_cali\_create\_scheme\_curve\_fitting()} is attempted per channel, falling back to raw-count operation if eFuse data is absent and surfacing \texttt{ESP\_ERR\_INVALID\_STATE} so the caller can detect the missing calibration explicitly.
+\end{itemize}
+
+The ToF driver (\texttt{components/vl53l3cx\_driver/tof\_vl53l3cx.c}) is an in-house wrapper above the STMicroelectronics VL53L3CX BareDriver (STSW-IMG015\footnote{\href{https://www.st.com/en/embedded-software/stsw-img015.html}{STSW-IMG015 — VL53L3CX BareDriver}}). The vendor library handles register access, ranging-mode configuration, and on-chip calibration; the wrapper adds the bus and reset handling that the BareDriver leaves to the caller:
+\begin{itemize}
+    \item \texttt{tof\_vl53l3cx\_init()} runs the XSHUT reset, registers the device on the ESP-IDF \texttt{i2c\_master} bus, and drives the BareDriver bring-up sequence (\texttt{VL53LX\_WaitDeviceBooted}, \texttt{\_DataInit}, \texttt{\_SetDistanceMode}, \texttt{\_StartMeasurement}); any failure rolls back the I$^2$C registration.
+    \item \texttt{tof\_vl53l3cx\_get\_data()} polls without blocking via \texttt{VL53LX\_GetMeasurementDataReady}/\texttt{\_GetMultiRangingData}/\texttt{\_ClearInterruptAndStartMeasurement}, returning \texttt{ESP\_ERR\_INVALID\_STATE} when no new frame is available so the ToF task can skip a cycle without holding the bus.
+    \item \texttt{tof\_vl53l3cx\_deinit()} stops the measurement engine, asserts XSHUT, and removes the device from the bus.
+    \item \texttt{vl53l3cx\_hardware\_reset()} applies the XSHUT timing required by the device datasheet.
+\end{itemize}
+
+The MPU-6050 is supported by an in-house driver under \texttt{src/imu\_util.c} that registers the device on the shared \texttt{i2c\_master} bus, performs power-management and range configuration, and exposes \texttt{imu\_setup()}, \texttt{imu\_teardown()}, \texttt{imu\_get\_who\_am\_i()}, and a polling routine returning an \texttt{imu\_sample\_t} (scaled accelerometer in $g$, gyroscope in deg/s, and die temperature). The driver is not packaged under \texttt{components/}; the heading estimator that consumes its output (\texttt{src/imu\_heading.c}) is described in Chapter~\ref{ch:software_arch}.
+
+\subsection{Testing}
+
+\subsubsection{IR Calibration}
+\label{sec:ir_calibration}
+
+The IR sensors were calibrated in place on the assembled vehicle on a polished marble floor with matte black boundary tape. The procedure for each sensor in turn was:
+\begin{enumerate}
+    \item Set $V_{blank}$ to a common approximate baseline (50~mV) representing the bare marble floor, rather than measuring it individually per sensor.
+    \item Position the vehicle so that the sensor sat over the tape and log the steady-state ADC voltage as $V_{tape}$.
+    \item Apply the new values at runtime through \texttt{ranging\_manager\_ir\_tune()} and only freeze them into \texttt{app\_main.c} once they were stable across multiple traversals of the tape.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|c|c|}
+\hline
+\textbf{Sensor} & \textbf{Position} & \textbf{$V_{blank}$ (mV)} & \textbf{$V_{tape}$ (mV)} \\
+\hline
+IR1 & Front Right & 50 & 290 \\
+\hline
+IR2 & Front Left & 50 & 1500 \\
+\hline
+IR3 & Rear Right & 50 & 2800 \\
+\hline
+IR4 & Rear Left & 50 & 2800 \\
+\hline
+\end{tabular}
+\caption{Per-sensor IR calibration constants used at runtime}
+\label{tab:ir_calibration}
+\end{table}
+
+The resulting per-sensor constants are summarised in Table~\ref{tab:ir_calibration}. The navigation logic acts on the normalised ratio $r$ defined in Section~\ref{sec:ir_hardware} rather than on a hard voltage threshold, so only $V_{blank}$ and $V_{tape}$ have functional effect; the per-channel \texttt{detect\_threshold\_mv} field exists in \texttt{ir\_sensor\_config\_t} but is currently used only by the debug log printer.
+
+The front-right channel reports a tape voltage roughly an order of magnitude lower than the rear sensors; this was traced to a likely unit-to-unit variation between the four breakout boards rather than to mounting geometry, and the per-sensor mapping absorbs the difference without needing a hardware swap.
+
+\subsubsection{Tests}
+
+The sensor drivers were tested using two Unity test suites under \texttt{test/} running on the ESP32, together with a hardware-in-the-loop check on the assembled vehicle:
+\begin{itemize}
+    \item \textbf{\texttt{test\_ir\_util.c}:} covers invalid-argument handling, the setup and teardown lifecycle, the voltage and ratio conversion bounds, and the sharing of a single \texttt{adc\_oneshot} unit between multiple channels.
+    \item \textbf{\texttt{test\_ranging\_manager.c}:} covers invalid-argument rejection on \texttt{ranging\_manager\_start()}, the start-to-stop lifecycle, queue delivery of \texttt{sensor\_event\_t} packets, and pause/resume behaviour.
+    \item \textbf{In-loop testing:} the ToF and IMU drivers are tested by logging sensor readings to the serial output and checking that the values are plausible: the reported distance falls as the vehicle approaches a wall, the IR ratios saturate at the tape boundary, and the gyroscope yaw rate inverts when the vehicle is rotated by hand.
+\end{itemize}
+
+\subsubsection{Mock Sensors}
+
+The ToF and IMU sensors each have a mock implementation (\texttt{src/tof\_mock.c} and \texttt{src/imu\_mock.c}) that satisfies the same function signatures as the real driver and returns synthetic but bounded samples. The mocks are selected at compile time through the \texttt{MOCK\_TOF\_SENSOR} and \texttt{MOCK\_IMU\_SENSOR} macros in \texttt{sensor\_config.h} and are used during firmware bring-up, before the I$^2$C bus has been brought online or when the corresponding physical sensor is unavailable, so that the FSM, the APF planner, and the ranging manager itself can be exercised without the full hardware stack.
+
 \section{Path Planning}
 
 \subsection{Overview}
