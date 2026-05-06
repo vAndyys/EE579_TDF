@@ -31,6 +31,26 @@ When flashing new code to the ESP32-S3:
 
 Following these precautions helps prevent damage to both the microcontroller and associated components.
 
+\section{Test Points & Validation}
+
+\subsection{Motor Control Validation}
+The motor subsystem can be validated using the MotorsTesting.c test driver. When this file is integrated into the main application and flashed to the ESP32, the system executes a predefined sequence of motor tests. 
+Testing should be conducted with the vehicle physically restrained to prevent unintended movement. During testing, the ESP32 should be powered via the laptop USB connection rather than the battery supply. Serial output can then be monitored to determine the intended movement command associated with each test case. 
+Observed motor behaviour should correspond to the direction reported through the serial interface. If the physical movement does not match the reported command, the wiring between the ESP32 and the motor driver should be verified against the pin mapping shown in the motor control section.
+
+\subsection{IR Sensor Validation}
+The IR sensors include onboard indicator LEDs which provide immediate feedback regarding sensor operation. One LED indicates that the sensor is receiving power, while the second LED changes state when the sensor detects reflected infrared light above the configured threshold.
+Sensor operation can therefore be verified by placing black tape or another reflective surface beneath the sensor and observing the LED response. If the power indicator LED is inactive, the voltage and ground connections on the Veroboard should be inspected for faults.
+
+\subsection{ToF Sensor Validation}
+Under normal operation, the vehicle continues forward movement in the absence of sensor input. The primary condition that causes the vehicle to stop is obstacle detection from the Time-of-Flight (ToF) sensor.
+If the ToF sensor fails to respond, the Veroboard connections should be checked, particularly the pull-up resistor connections used by the communication lines.
+
+\subsection{Integrated System Testing}
+The complete system can be validated in a stationary environment by manually presenting black tape beneath the IR sensors to simulate track movement. This allows sensor responses and corresponding motor outputs to be observed without requiring the vehicle to physically traverse a course.
+This procedure provides a controlled method for verifying correct interaction between the sensing, pathfinding, and motor control subsystems.
+
+
 \section{System Modifiability and Extension}
 
 The software architecture has been designed with modularity as a core principle, allowing individual subsystems to be developed, tested, and extended independently. Each major component—such as sensor processing, navigation, and motor control—is implemented as a separate module with clearly defined inputs and outputs.
