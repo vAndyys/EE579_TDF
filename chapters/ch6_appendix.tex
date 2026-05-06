@@ -1,0 +1,71 @@
+\chapter{Appendix}
+
+\section{Full test table}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lllll}
+\toprule
+\textbf{Test Name} & \textbf{Input Value} & \textbf{Expected Result} & \textbf{Actual Result} & \textbf{Passed?} \\
+\midrule
+
+Fwd Straight & \{0.9, 0.0, 1\} & Car Drives forward & Car Drives forward & Yes \\
+Bck Straight & \{0.9, 0.0, -1\} & Car Drives forward & Car Drives forward & Yes \\
+Left Turn & \{0, -0.9, 1\} & Front Wheel Turn Left & Front Wheel Turn Left & Yes \\
+Right Turn & \{0, 0.9, 1\} & Front Wheel Turn Right & Front Wheel Turn Right & Yes \\
+Reverse Left Turn & \{0, 0.9, -1\} & Front Wheel Turn Left & Front Wheel Turn Left & Yes \\
+Reverse Right Turn & \{0, -0.9, -1\} & Front Wheel Turn Right & Front Wheel Turn Right & Yes \\
+Fwd \& Left & \{0.9, -0.9, 1\} & Car Turns Left \& Drives Forward & Car Turns Left \& Drives Forward & Yes \\
+Fwd \& Right & \{0.9, 0.9, 1\} & Car Turns Right \& Drives Forward & Car Turns Right \& Drives Forward & Yes \\
+Bck \& Left & \{0.9, 0.9, -1\} & Car Turns Left \& Reverses & Car Turns Left \& Reverses & Yes \\
+Bck \& Right & \{0.9, -0.9, -1\} & Car Turns Right \& Reverses & Car Turns Right \& Reverses & Yes \\
+
+Fwd Speed Under & \{0.99, 0.0, 1\} & Car Drives forward & Car Drives forward & Yes \\
+Fwd Speed Limit & \{1, 0.0, 1\} & Car Drives forward & Car Drives forward & Yes \\
+Fwd Speed Over & \{1.01, 0.0, 1\} & Car Drives forward & Car Drives forward & Yes \\
+Bck Speed Under & \{0.99, 0.0, -1\} & Car Reverses & Car Reverses & Yes \\
+Bck Speed Limit & \{1, 0.0, -1\} & Car Reverses & Car Reverses & Yes \\
+Bck Speed Over & \{1.01, 0.0, -1\} & Car Reverses & Car Reverses & Yes \\
+
+Left Turn Under & \{0, -0.99, 1\} & Car Turns Left & Car Turns Left & Yes \\
+Left Turn Limit & \{0, -1, 1\} & Car Turns Left & Car Turns Left & Yes \\
+Left Turn Over & \{0, -1.01, 1\} & Car Turns Left & Car Turns Left & Yes \\
+Right Turn Under & \{0, 0.99, 1\} & Car Turns Right & Car Turns Right & Yes \\
+Right Turn Limit & \{0, 1, 1\} & Car Turns Right & Car Turns Right & Yes \\
+Right Turn Over & \{0, 1.01, 1\} & Car Turns Right & Car Turns Right & Yes \\
+Negative Left Turn Under & \{0, 0.99, -1\} & Car Turns Left & Car Turns Left & Yes \\
+Negative Left Turn Limit & \{0, 1, -1\} & Car Turns Left & Car Turns Left & Yes \\
+Negative Left Turn Over & \{0, 1.01, -1\} & Car Turns Left & Car Turns Left & Yes \\
+Negative Right Turn Under & \{0, -0.99, -1\} & Car Turns Right & Car Turns Right & Yes \\
+Negative Right Turn Limit & \{0, -1, -1\} & Car Turns Right & Car Turns Right & Yes \\
+Negative Right Turn Over & \{0, -1.01, -1\} & Car Turns Right & Car Turns Right & Yes \\
+
+FwdL Under & \{0.99, -0.99, 1\} & Car Drives Forwards \& Left & Car Drives Forwards \& Left & Yes \\
+FwdL Limit & \{1, -1, 1\} & Car Drives Forwards \& Left & Car Drives Forwards \& Left & Yes \\
+FwdL Over & \{1.01, -1.01, 1\} & Car Drives Forwards \& Left & Car Drives Forwards \& Left & Yes \\
+FwdR Under & \{0.99, 0.99, 1\} & Car Drives Forwards \& Right & Car Drives Forwards \& Right & Yes \\
+FwdR Limit & \{1, 1, 1\} & Car Drives Forwards \& Right & Car Drives Forwards \& Right & Yes \\
+FwdR Over & \{1.01, 1.01, 1\} & Car Drives Forwards \& Right & Car Drives Forwards \& Right & Yes \\
+BckL Under & \{0.99, 0.99, -1\} & Car Drives Backwards \& Left & Car Drives Backwards \& Left & Yes \\
+BckL Limit & \{1, 1, -1\} & Car Drives Backwards \& Left & Car Drives Backwards \& Left & Yes \\
+BckL Over & \{1.01, 1.01, -1\} & Car Drives Backwards \& Left & Car Drives Backwards \& Left & Yes \\
+BckR Under & \{0.99, -0.99, -1\} & Car Drives Backwards \& Right & Car Drives Backwards \& Right & Yes \\
+BckR Limit & \{1, -1, -1\} & Car Drives Backwards \& Right & Car Drives Backwards \& Right & Yes \\
+BckR Over & \{1.01, -1.01, -1\} & Car Drives Backwards \& Right & Car Drives Backwards \& Right & Yes \\
+
+Extreme Fwd & \{20.0, 0.0, 1\} & Car Drives forward & Car Drives forward & Yes \\
+Extreme Bck & \{20.0, 0.0, -1\} & Car Drives forward & Car Drives forward & Yes \\
+Extreme Left & \{0, -20.0, 1\} & Front Wheel Turn Left & Front Wheel Turn Left & Yes \\
+Extreme Right & \{0, 20.0, 1\} & Front Wheel Turn Right & Front Wheel Turn Right & Yes \\
+Extreme Negative Left & \{0, 20.0, -1\} & Front Wheel Turn Left & Front Wheel Turn Left & Yes \\
+Extreme Negative Right & \{0, -20.0, -1\} & Front Wheel Turn Right & Front Wheel Turn Right & Yes \\
+Extreme Fwd \& Left & \{20.0, -20.0, 1\} & Car Turns Left \& Drives Forward & Car Turns Left \& Drives Forward & Yes \\
+Extreme Fwd \& Right & \{20.0, 20.0, 1\} & Car Turns Right \& Drives Forward & Car Turns Right \& Drives Forward & Yes \\
+Extreme Bck \& Left & \{20.0, 20.0, -1\} & Car Turns Left \& Reverses & Car Turns Left \& Reverses & Yes \\
+Extreme Bck \& Right & \{20.0, -20.0, -1\} & Car Turns Right \& Reverses & Car Turns Right \& Reverses & Yes \\
+
+\bottomrule
+\end{tabular}
+\caption{Vehicle Control Test Results}
+\label{tab:vehicle_tests}
+\end{table}
